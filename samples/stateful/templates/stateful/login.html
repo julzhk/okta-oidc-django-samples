@@ -1,0 +1,108 @@
+{% extends 'stateful/index.html' %}
+{% block content %}
+
+<!-- Bootstrap -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
+<!-- Okta Sign in Widget -->
+<link href="https://ok1static.oktacdn.com/assets/js/sdk/okta-signin-widget/1.6.0/css/okta-sign-in.min.css" type="text/css" rel="stylesheet">
+<link href="https://ok1static.oktacdn.com/assets/js/sdk/okta-signin-widget/1.6.0/css/okta-theme.css" type="text/css" rel="stylesheet">
+
+<header>
+    <nav class="navbar navbar-default  navbar-fixed-top">
+        <div class="container-fluid">
+          <!-- Brand and toggle get grouped for better mobile display -->
+          <div class="navbar-header">
+              <a class="navbar-brand" href="#/">
+                <img src="https://www.okta.com/sites/all/themes/Okta/images/logo.svg" height="100%" width="100%"/>
+              </a>
+          </div>
+        </div>
+    </nav>
+</header>
+
+<div class="row">
+  <div class="col-md-3"></div>
+  <div class="col-md-6">
+	  <center>
+	  	<div id="okta-login-container"></div>
+	  	<div class="btn-group-vertical">
+	  		<br/><br/>
+			<button class="btn btn-lg btn-primary" id="redirect">Sign in with Okta</button>
+	  		<br/>
+			<button class="btn btn-lg btn-warning" id="widget">Sign in with Widget</button>
+			<br/>
+			<button class="btn btn-lg btn-info" id="linkedin">Sign in with LinkedIn </button>
+		</div>
+      </center>
+	{% if error %}
+	<pre style="color:red"> {{error}} </pre>
+	{% endif %}    
+  </div>
+  <div class="col-md-3"></div>
+</div>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+    // Initialize
+    var authClient = new OktaAuth({{config|safe}});
+    
+    $('#redirect').click(function(event) {
+      event.preventDefault();
+      
+      // Create AuthJS Request
+      authClient.token.getWithRedirect(
+      {
+        'responseType' : 'code',
+        'scopes' : "{{config.scope}}".split(" ")
+      });
+    });
+
+    $('#widget').click(function(event) {
+      // Hide elements for widget
+      document.getElementById('widget').style.visibility = "hidden";
+      document.getElementById('redirect').style.visibility = "hidden";
+      document.getElementById('linkedin').style.visibility = "hidden";
+
+      // Init Sign in Widget
+      var oktaSignIn = new OktaSignIn({
+        baseUrl: "{{config.url}}",
+        clientId: "{{config.clientId}}",
+        redirectUri: "{{config.redirectUri}}",
+        authParams: {
+            responseType: "code",
+            responseMode: "query",
+            display: "page",
+            scopes: "{{config.scope}}".split(" ")
+        }
+      });
+      event.preventDefault();
+    
+      // Show the sign-in widget
+      oktaSignIn.renderEl(
+        { el: '#okta-login-container' },
+        // Success callback (invoked on successful authentication)
+        function (res) {
+          // Code flow redirects to /callback
+        },
+        function (err) {
+          console.error(err);
+        }
+      );
+    });
+
+    $('#linkedin').click(function(event) {
+      event.preventDefault();
+      // Create AuthJS Request
+      authClient.token.getWithRedirect(
+        {
+          'responseType' : 'code',
+          'idp' : '{{config.idp}}',
+        }
+      );
+    }); 
+  });
+</script>
+{% endblock %}

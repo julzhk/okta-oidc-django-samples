@@ -1,0 +1,5 @@
+Django==1.9.7
+PyJWT==1.4.0
+python-jose==1.0.0
+requests==2.10.0
+
